@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use image::{ImageBuffer, Rgb};
 
 struct Screen {
@@ -6,11 +8,11 @@ struct Screen {
 }
 
 impl Screen {
-    fn new(basename: &str) -> Self {
+    fn new(path: &Path) -> Self {
         Self {
-            basename: basename.to_owned(),
+            basename: path.file_stem().unwrap().to_string_lossy().into_owned(),
             rgb_avg: {
-                let img = image::open(format!("/home/penguino/Pictures/jumpking/{basename}"))
+                let img = image::open(path)
                     .expect("Could not find test-image")
                     .into_rgb8();
 
@@ -21,13 +23,18 @@ impl Screen {
 }
 
 fn main() {
-    let screens = [
-        Screen::new("drain1.png"),
-        Screen::new("drain2.png"),
-        Screen::new("redcrown5.png"),
-        Screen::new("redcrown4.png"),
-        Screen::new("redcrown3.png"),
-    ];
+    let screens_dir = Path::new("/home/penguino/Pictures/jumpking/");
+
+    assert!(screens_dir.is_dir());
+
+    let screens = screens_dir
+        .read_dir()
+        .unwrap()
+        .filter_map(Result::ok)
+        .map(|d| Screen::new(&d.path()))
+        .collect::<Vec<Screen>>();
+
+    assert!(!screens.is_empty());
 
     let perp = image::open("/home/penguino/Pictures/screenshots/05-13-2025T08-27-54.png")
         .expect("Could not find test-image")
