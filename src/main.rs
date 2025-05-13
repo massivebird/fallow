@@ -60,9 +60,13 @@ fn main() {
 fn rgb_avg(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Rgb<u8> {
     let mut avg: Rgb<u8> = Rgb([0, 0, 0]);
 
-    for Rgb { 0: rgb } in img
-        .pixels()
-        .filter(|rgb| rgb.0.iter().any(|&v| v >= 60))
+    // Only compute average of a top-left square.
+    // Calculated relative to image height.
+    let bounds = u32::try_from(img.rows().len() / 5).unwrap();
+
+    for (_, _, Rgb { 0: rgb }) in img
+        .enumerate_pixels()
+        .filter(|(x, y, Rgb { 0: rgb })| *x <= bounds && *y <= bounds && rgb.iter().any(|&v| v >= 60))
     {
         for i in 0..3 {
             let sum: u16 = u16::from(avg[i]) + u16::from(rgb[i]);
