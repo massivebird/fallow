@@ -60,12 +60,9 @@ fn main() {
 fn rgb_avg(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Rgb<u8> {
     let mut avg: Rgb<u8> = Rgb([0, 0, 0]);
 
-    // Minimum <R|G|B> required to factor a pixel into the average.
-    let min = 60;
-
     for Rgb { 0: rgb } in img
         .pixels()
-        .filter(|Rgb([r, g, b])| *r >= min || *g >= min || *b >= min)
+        .filter(|rgb| rgb.0.iter().any(|&v| v >= 60))
     {
         for i in 0..3 {
             let sum: u16 = u16::from(avg[i]) + u16::from(rgb[i]);
