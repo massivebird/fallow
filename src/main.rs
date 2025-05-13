@@ -67,18 +67,18 @@ fn rgb_avg(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Rgb<u8> {
     {
         for i in 0..3 {
             let sum: u16 = u16::from(mode[i]) + u16::from(rgb[i]);
-            mode[i] = sum.div_euclid(2) as u8;
+            mode[i] = u8::try_from(sum.div_euclid(2)).unwrap();
         }
     }
 
     mode
 }
 
-fn vector_length(v: [u8; 3]) -> f32 {
+fn vector_length(vec: [u8; 3]) -> f32 {
     let mut inner: u32 = 0;
 
-    for i in 0..3 {
-        inner += u32::from(v[i]).pow(2);
+    for val in vec {
+        inner += u32::from(val).pow(2);
     }
 
     f32::sqrt(inner as f32)
