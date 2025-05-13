@@ -18,16 +18,16 @@ fn main() {
     dbg!(perp_mode);
 
     let cosine_similarity: f32 = {
+        // Cosine similarity of two vectors is the dot product of the vectors
+        // divided by the product of their lengths.
+
         let mut dot_product: u16 = 0;
 
         for i in 0..3 {
             dot_product += u16::from(perp_mode[i]) * (u16::from(basis_mode[i]));
         }
 
-        let basis_length = vector_length(basis_mode.0);
-        let perp_length = vector_length(perp_mode.0);
-
-        let length_product = basis_length * perp_length;
+        let length_product = vector_length(basis_mode.0) * vector_length(perp_mode.0);
 
         f32::from(dot_product) / length_product
     };
