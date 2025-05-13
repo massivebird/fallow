@@ -22,6 +22,16 @@ impl Screen {
 }
 
 fn main() {
+    let perp_path = Path::new("/home/penguino/Pictures/screenshots/05-13-2025T09-23-37.png");
+
+    assert!(perp_path.is_file());
+
+    let perp = image::open(perp_path)
+        .expect("Could not find test-image")
+        .into_rgb8();
+
+    let perp_avg = rgb_avg(&perp);
+
     let screens_dir = Path::new("/home/penguino/Pictures/jumpking/");
 
     assert!(screens_dir.is_dir());
@@ -34,12 +44,6 @@ fn main() {
         .collect::<Vec<Screen>>();
 
     assert!(!screens.is_empty());
-
-    let perp = image::open("/home/penguino/Pictures/screenshots/05-13-2025T08-27-54.png")
-        .expect("Could not find test-image")
-        .into_rgb8();
-
-    let perp_avg = rgb_avg(&perp);
 
     let mut best_screen = &screens[0];
     let mut best_score = cosine_similarity(best_screen.rgb_avg.0, perp_avg.0);
