@@ -29,7 +29,7 @@ impl Screen {
 }
 
 fn main() {
-    let perp_path = Path::new("/home/penguino/Pictures/screenshots/05-13-2025T09-29-50.png");
+    let perp_path = Path::new("/home/penguino/Pictures/screenshots/05-13-2025T09-16-55.png");
 
     assert!(perp_path.is_file());
 
@@ -57,11 +57,13 @@ fn main() {
             .expect("Could not find test-image")
             .into_rgb8();
 
+        let to_size = 15;
+
         let rel_size = img.height() / 5;
 
         image::imageops::crop(&mut img, 0, 0, rel_size, rel_size);
 
-        let img = image::imageops::resize(&img, 10, 10, FilterType::Nearest);
+        let img = image::imageops::resize(&img, to_size, to_size, FilterType::Nearest);
 
         let rel_size = perp.height() / 5;
 
@@ -69,7 +71,7 @@ fn main() {
 
         image::imageops::crop(&mut perp, 0, 0, rel_size, rel_size);
 
-        let perp = image::imageops::resize(&perp, 10, 10, FilterType::Nearest);
+        let perp = image::imageops::resize(&perp, to_size, to_size, FilterType::Nearest);
 
         let mut tmp = cosine_similarity(
             img.pixels().next().unwrap().0,
@@ -92,7 +94,7 @@ fn main() {
     let mut best_score = calc_score(&screens[0]);
 
     for screen in screens.iter().skip(1) {
-        dbg!(screen);
+        dbg!(screen.basename());
         let cosine_similarity = calc_score(screen);
         dbg!(cosine_similarity);
 
