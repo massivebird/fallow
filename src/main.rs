@@ -1,5 +1,5 @@
 use image::imageops::FilterType;
-use image::{GenericImageView, Rgb};
+use image::{GenericImageView, ImageBuffer, Rgb};
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 
@@ -33,11 +33,11 @@ fn main() {
 
     assert!(perp_path.is_file());
 
-    let perp = image::open(perp_path)
+    let perp_img = image::open(perp_path)
         .expect("Could not find test-image")
         .into_rgb8();
 
-    let perp_avg = rgb_avg(&perp);
+    let perp_avg = rgb_avg(&perp_img);
 
     let screens_dir = Path::new("/home/penguino/Pictures/jumpking/");
 
@@ -53,35 +53,23 @@ fn main() {
     assert!(!screens.is_empty());
 
     let calc_score = |s: &Screen| {
-        let mut img = image::open(&s.path)
-            .expect("Could not find test-image")
-            .into_rgb8();
+        let screen_img = my_crop_resize(
+            &image::open(&s.path)
+                .expect("Could not find test-image")
+                .into_rgb8(),
+        );
 
-        let to_size = 15;
-
-        let rel_size = img.height() / 5;
-
-        image::imageops::crop(&mut img, 0, 0, rel_size, rel_size);
-
-        let img = image::imageops::resize(&img, to_size, to_size, FilterType::Nearest);
-
-        let rel_size = perp.height() / 5;
-
-        let mut perp = perp.clone();
-
-        image::imageops::crop(&mut perp, 0, 0, rel_size, rel_size);
-
-        let perp = image::imageops::resize(&perp, to_size, to_size, FilterType::Nearest);
+        let perp_img = my_crop_resize(&perp_img);
 
         let mut tmp = cosine_similarity(
-            img.pixels().next().unwrap().0,
-            perp.pixels().next().unwrap().0,
+            screen_img.pixels().next().unwrap().0,
+            perp_img.pixels().next().unwrap().0,
         );
 
         for i in 1..50 {
             tmp += cosine_similarity(
-                img.pixels().nth(i).unwrap().0,
-                perp.pixels().nth(i).unwrap().0,
+                screen_img.pixels().nth(i).unwrap().0,
+                perp_img.pixels().nth(i).unwrap().0,
             );
         }
 
@@ -155,4 +143,16 @@ fn cosine_similarity(a: [u8; 3], b: [u8; 3]) -> f32 {
     }
 
     dot_product as f32 / length_product
+}
+
+fn my_crop_resize(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
+    let mut img = img.clone();
+
+    let crop_size = img.height() / 5;
+
+    image::imageops::crop(&mut img, 0, 0, crop_size, crop_size);
+
+    let resize_size = 15;
+
+    image::imageops::resize(&img, resize_size, resize_size, FilterType::Nearest)
 }
