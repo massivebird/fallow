@@ -5,17 +5,17 @@ fn main() {
         .expect("Could not find test-image")
         .into_rgba8();
 
-    let basis_mode = calc_mode(&basis);
+    let basis_avg = rgb_avg(&basis);
 
-    dbg!(basis_mode);
+    dbg!(basis_avg);
 
     let perp = image::open("/home/penguino/Pictures/screenshots/05-13-2025T07-21-48.png")
         .expect("Could not find test-image")
         .into_rgba8();
 
-    let perp_mode = calc_mode(&perp);
+    let perp_avg = rgb_avg(&perp);
 
-    dbg!(perp_mode);
+    dbg!(perp_avg);
 
     let cosine_similarity: f32 = {
         // Cosine similarity of two vectors is the dot product of the vectors
@@ -24,10 +24,10 @@ fn main() {
         let mut dot_product: u16 = 0;
 
         for i in 0..3 {
-            dot_product += u16::from(perp_mode[i]) * (u16::from(basis_mode[i]));
+            dot_product += u16::from(perp_avg[i]) * (u16::from(basis_avg[i]));
         }
 
-        let length_product = vector_length(basis_mode.0) * vector_length(perp_mode.0);
+        let length_product = vector_length(basis_avg.0) * vector_length(perp_avg.0);
 
         f32::from(dot_product) / length_product
     };
@@ -35,7 +35,7 @@ fn main() {
     dbg!(cosine_similarity);
 }
 
-fn calc_mode(img: &ImageBuffer<Rgba<u8>, Vec<u8>>) -> Rgb<u8> {
+fn rgb_avg(img: &ImageBuffer<Rgba<u8>, Vec<u8>>) -> Rgb<u8> {
     let mut mode: Rgb<u8> = Rgb([0, 0, 0]);
 
     let min = 60;
