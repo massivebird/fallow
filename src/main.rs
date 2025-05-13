@@ -83,8 +83,6 @@ fn main() {
                 img.pixels().nth(i).unwrap().0,
                 perp.pixels().nth(i).unwrap().0,
             );
-
-            tmp /= 2.0;
         }
 
         tmp
@@ -95,11 +93,11 @@ fn main() {
 
     for screen in screens.iter().skip(1) {
         dbg!(screen.basename());
-        let cosine_similarity = calc_score(screen);
-        dbg!(cosine_similarity);
+        let score = calc_score(screen);
+        dbg!(score);
 
-        if cosine_similarity > best_score {
-            best_score = cosine_similarity;
+        if score > best_score {
+            best_score = score;
             best_screen = screen;
         }
     }
