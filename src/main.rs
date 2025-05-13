@@ -58,20 +58,22 @@ fn main() {
 }
 
 fn rgb_avg(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Rgb<u8> {
-    let mut mode: Rgb<u8> = Rgb([0, 0, 0]);
+    let mut avg: Rgb<u8> = Rgb([0, 0, 0]);
 
+    // Minimum <R|G|B> required to factor a pixel into the average.
     let min = 60;
+
     for Rgb { 0: rgb } in img
         .pixels()
         .filter(|Rgb([r, g, b])| *r >= min || *g >= min || *b >= min)
     {
         for i in 0..3 {
-            let sum: u16 = u16::from(mode[i]) + u16::from(rgb[i]);
-            mode[i] = u8::try_from(sum.div_euclid(2)).unwrap();
+            let sum: u16 = u16::from(avg[i]) + u16::from(rgb[i]);
+            avg[i] = u8::try_from(sum.div_euclid(2)).unwrap();
         }
     }
 
-    mode
+    avg
 }
 
 fn vector_length(vec: [u8; 3]) -> f32 {
