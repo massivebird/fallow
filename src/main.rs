@@ -1,6 +1,5 @@
-use std::path::Path;
-
 use image::{ImageBuffer, Rgb};
+use std::path::Path;
 
 struct Screen {
     basename: String,
@@ -64,10 +63,9 @@ fn rgb_avg(img: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> Rgb<u8> {
     // Calculated relative to image height.
     let bounds = u32::try_from(img.rows().len() / 5).unwrap();
 
-    for (_, _, Rgb { 0: rgb }) in img
-        .enumerate_pixels()
-        .filter(|(x, y, Rgb { 0: rgb })| *x <= bounds && *y <= bounds && rgb.iter().any(|&v| v >= 60))
-    {
+    for (_, _, Rgb { 0: rgb }) in img.enumerate_pixels().filter(|(x, y, Rgb { 0: rgb })| {
+        *x <= bounds && *y <= bounds && rgb.iter().any(|&v| v >= 60)
+    }) {
         for i in 0..3 {
             let sum: u16 = u16::from(avg[i]) + u16::from(rgb[i]);
             avg[i] = u8::try_from(sum.div_euclid(2)).unwrap();
