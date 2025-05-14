@@ -69,7 +69,7 @@ fn main() {
     let mut best_screen: Option<&Screen> = None;
     let mut best_dist: Option<u32> = None;
 
-    for screen in screens.iter().skip(1) {
+    for screen in &screens {
         let dist = perp_hash.dist(screen.hash.get().unwrap());
 
         if best_dist.is_none_or(|best| best > dist) {
