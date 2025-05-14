@@ -42,12 +42,18 @@ fn main() {
 
     assert!(screens_dir.is_dir());
 
+    println!("Loading screen images.");
+
     let screens = screens_dir
         .read_dir()
         .unwrap()
         .filter_map(Result::ok)
         .map(|d| Screen::new(&d.path()))
         .collect::<Vec<Screen>>();
+
+    assert!(!screens.is_empty());
+
+    println!("Initializing screen hashes. This takes a second.");
 
     let hasher = HasherConfig::new().to_hasher();
 
@@ -56,7 +62,7 @@ fn main() {
         screen.init_hash(&hasher);
     }
 
-    assert!(!screens.is_empty());
+    println!("All screen hashes completed.");
 
     let perp_hash = hasher.hash_image(&perp_img);
 
@@ -65,8 +71,6 @@ fn main() {
 
     for screen in screens.iter().skip(1) {
         let dist = perp_hash.dist(screen.hash.get().unwrap());
-        dbg!(screen.basename());
-        dbg!(dist);
 
         if best_dist.is_none_or(|best| best > dist) {
             best_dist = Some(dist);
