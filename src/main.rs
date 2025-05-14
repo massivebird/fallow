@@ -53,7 +53,7 @@ fn main() {
 
     assert!(!screens.is_empty());
 
-    println!("Initializing screen hashes. This takes a second.");
+    println!("Initializing screen hashes.");
 
     let hasher = HasherConfig::new().to_hasher();
 
@@ -61,8 +61,6 @@ fn main() {
     for screen in &screens {
         screen.init_hash(&hasher);
     }
-
-    println!("All screen hashes completed.");
 
     let perp_hash = hasher.hash_image(&perp_img);
 
