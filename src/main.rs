@@ -2,7 +2,10 @@ use clap::{Arg, ValueHint};
 use find_subimage::SubImageFinderState;
 use image::{ImageBuffer, Rgb, imageops::resize};
 use img_hash::{FilterType::Nearest, Hasher, HasherConfig, ImageHash, image};
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Display,
+    path::{Path, PathBuf},
+};
 
 const SCREEN_HEIGHT: u32 = 611;
 
@@ -20,6 +23,12 @@ impl Screen {
             area,
             hash: hasher.hash_image(&image::open(path).expect("Could not find test-image")),
         }
+    }
+}
+
+impl Display for Screen {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} (screen {})", self.area.name(), self.area.num())
     }
 }
 
@@ -148,7 +157,9 @@ fn main() {
     let mut best_dist: Option<u32> = None;
 
     for screen in &screens {
+        // dbg!(screen.to_string());
         let dist = perp_hash.dist(&screen.hash);
+        // dbg!(dist);
 
         if best_dist.is_none_or(|best| best > dist) {
             best_dist = Some(dist);
@@ -156,16 +167,12 @@ fn main() {
         }
     }
 
-    println!(
-        "Area: {} (screen {})",
-        best_screen.unwrap().area.name(),
-        best_screen.unwrap().area.num()
-    );
+    println!("Area: {}", best_screen.unwrap());
 
     let mut finder = SubImageFinderState::new().with_backend(find_subimage::Backend::Scalar {
-        threshold: 0.4,
-        step_x: 1,
-        step_y: 1,
+        threshold: 0.5,
+        step_x: 2,
+        step_y: 2,
     });
 
     let king_pos = locate_king(&mut finder, &input_img);
