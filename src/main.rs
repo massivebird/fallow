@@ -171,8 +171,8 @@ fn main() {
 
     let mut finder = SubImageFinderState::new().with_backend(find_subimage::Backend::Scalar {
         threshold: 0.5,
-        step_x: 2,
-        step_y: 2,
+        step_x: 1,
+        step_y: 1,
     });
 
     let king_pos = locate_king(&mut finder, &input_img);
@@ -218,7 +218,7 @@ fn find_patch(
             .to_vec(),
     );
 
-    locs.iter().max_by(|a, b| a.2.total_cmp(&b.2)).copied()
+    locs.iter().min_by(|a, b| a.2.total_cmp(&b.2)).copied()
 }
 
 #[allow(clippy::similar_names)]
