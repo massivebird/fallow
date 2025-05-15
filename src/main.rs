@@ -1,3 +1,4 @@
+use clap::{Arg, ValueHint};
 use find_subimage::SubImageFinderState;
 use image::{DynamicImage, ImageBuffer, Rgb, imageops};
 use img_hash::{Hasher, HasherConfig, ImageHash, image};
@@ -33,7 +34,15 @@ impl Screen {
 }
 
 fn main() {
-    let perp_path = Path::new("/home/penguino/Pictures/screenshots/05-13-2025T09-31-37.png");
+    let matches = clap::command!()
+        .arg(
+            Arg::new("img")
+                .value_hint(ValueHint::FilePath)
+                .required(true),
+        )
+        .get_matches();
+
+    let perp_path = Path::new(matches.get_one::<String>("img").unwrap());
 
     assert!(perp_path.is_file());
 
