@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 img_hash = "3.2.0"
 image = { version = "0.23.14", features = [ "png" ] }
+find-subimage = "0.1.12"
