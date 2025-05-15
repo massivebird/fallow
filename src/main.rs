@@ -4,28 +4,21 @@ use image::{DynamicImage, ImageBuffer, Rgb, imageops};
 use img_hash::{Hasher, HasherConfig, ImageHash, image};
 use std::{
     borrow::Cow,
-    cell::OnceCell,
     path::{Path, PathBuf},
 };
 
 #[derive(Debug)]
 struct Screen {
     path: PathBuf,
-    image: DynamicImage,
-    hash: OnceCell<ImageHash>,
+    hash: ImageHash,
 }
 
 impl Screen {
-    fn new(path: &Path) -> Self {
+    fn new(path: &Path, hasher: &Hasher) -> Self {
         Self {
             path: path.to_path_buf(),
-            image: image::open(path).expect("Could not find test-image"),
-            hash: OnceCell::new(),
+            hash: hasher.hash_image(&image::open(path).expect("Could not find test-image")),
         }
-    }
-
-    fn init_hash(&self, hasher: &Hasher) {
-        self.hash.set(hasher.hash_image(&self.image)).unwrap();
     }
 
     fn basename(&self) -> Cow<str> {
@@ -56,23 +49,17 @@ fn main() {
 
     println!("Loading screen images.");
 
+    // Use this hasher to hash all screen images.
+    let hasher = HasherConfig::new().to_hasher();
+
     let screens = screens_dir
         .read_dir()
         .unwrap()
         .filter_map(Result::ok)
-        .map(|d| Screen::new(&d.path()))
+        .map(|d| Screen::new(&d.path(), &hasher))
         .collect::<Vec<Screen>>();
 
     assert!(!screens.is_empty());
-
-    println!("Initializing screen hashes.");
-
-    let hasher = HasherConfig::new().to_hasher();
-
-    // Initialize hashes.
-    for screen in &screens {
-        screen.init_hash(&hasher);
-    }
 
     let perp_hash = hasher.hash_image(&input_img);
 
@@ -80,7 +67,7 @@ fn main() {
     let mut best_dist: Option<u32> = None;
 
     for screen in &screens {
-        let dist = perp_hash.dist(screen.hash.get().unwrap());
+        let dist = perp_hash.dist(&screen.hash);
 
         if best_dist.is_none_or(|best| best > dist) {
             best_dist = Some(dist);
