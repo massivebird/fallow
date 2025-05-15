@@ -1,9 +1,6 @@
 use clap::{Arg, ValueHint};
 use find_subimage::SubImageFinderState;
-use image::{
-    ImageBuffer, Rgb,
-    imageops::resize,
-};
+use image::{ImageBuffer, Rgb, imageops::resize};
 use img_hash::{FilterType::Nearest, Hasher, HasherConfig, ImageHash, image};
 use std::path::{Path, PathBuf};
 
@@ -29,6 +26,7 @@ impl Screen {
 #[derive(Copy, Clone, Debug)]
 enum Area {
     Tower(u32),
+    Blue(u32),
     Chapel(u32),
     Stormwall(u32),
     Frontier(u32),
@@ -41,7 +39,8 @@ enum Area {
 impl Area {
     const fn height_offset(self) -> u32 {
         match self {
-            Self::Tower(n) => (n + 36) * SCREEN_HEIGHT,
+            Self::Tower(n) => (n + 39) * SCREEN_HEIGHT,
+            Self::Blue(n) => (n + 36) * SCREEN_HEIGHT,
             Self::Chapel(n) => (n + 32) * SCREEN_HEIGHT,
             Self::Stormwall(n) => (n + 25) * SCREEN_HEIGHT,
             Self::Frontier(n) => (n + 19) * SCREEN_HEIGHT,
@@ -55,6 +54,7 @@ impl Area {
     fn name(self) -> String {
         match self {
             Self::Tower(_) => "The Tower".to_owned(),
+            Self::Blue(_) => "Blue Ruin".to_owned(),
             Self::Chapel(_) => "Chapel Perilous".to_owned(),
             Self::Stormwall(_) => "Stormwall Pass".to_owned(),
             Self::Frontier(_) => "Great Frontier".to_owned(),
@@ -68,6 +68,7 @@ impl Area {
     const fn num(self) -> u32 {
         match self {
             Self::Tower(i)
+            | Self::Blue(i)
             | Self::Chapel(i)
             | Self::Stormwall(i)
             | Self::Frontier(i)
@@ -112,8 +113,8 @@ fn main() {
 
     let mut screens = vec![];
 
-    macro_rules! screen {
-        ($area: expr, $prefix: expr) => {
+    macro_rules! add_screens {
+        ($vec: expr, $area: expr, $prefix: expr) => {
             #[allow(unused_assignments)]
             {
                 let mut counter = 1;
@@ -122,21 +123,22 @@ fn main() {
                     .iter()
                     .find(|p| p.ends_with(format!("{}{counter}.png", $prefix)))
                 {
-                    screens.push(Screen::new(path, $area(counter), &hasher));
+                    $vec.push(Screen::new(path, $area(counter), &hasher));
                     counter += 1;
                 }
             }
         };
     }
 
-    screen!(Area::Tower, "tower");
-    screen!(Area::Chapel, "chapel");
-    screen!(Area::Stormwall, "storm");
-    screen!(Area::Frontier, "frontier");
-    screen!(Area::Bargain, "bargain");
-    screen!(Area::False, "false");
-    screen!(Area::Drain, "drain");
-    screen!(Area::Redcrown, "redcrown");
+    add_screens!(&mut screens, Area::Tower, "tower");
+    add_screens!(&mut screens, Area::Blue, "blue");
+    add_screens!(&mut screens, Area::Chapel, "chapel");
+    add_screens!(&mut screens, Area::Stormwall, "storm");
+    add_screens!(&mut screens, Area::Frontier, "frontier");
+    add_screens!(&mut screens, Area::Bargain, "bargain");
+    add_screens!(&mut screens, Area::False, "false");
+    add_screens!(&mut screens, Area::Drain, "drain");
+    add_screens!(&mut screens, Area::Redcrown, "redcrown");
 
     assert!(!screens.is_empty());
 
@@ -174,7 +176,7 @@ fn main() {
 
     println!(
         "Progress: {:0.02}%",
-        (height as f32) * 100.0 / ((SCREEN_HEIGHT * 41) as f32)
+        (height as f32) * 100.0 / ((SCREEN_HEIGHT * 45) as f32)
     );
 }
 
