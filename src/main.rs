@@ -1,12 +1,11 @@
 use find_subimage::SubImageFinderState;
-use image::imageops::{self, resize};
-use image::{DynamicImage, ImageBuffer, Rgb};
-use img_hash::FilterType::Nearest;
+use image::{DynamicImage, ImageBuffer, Rgb, imageops};
 use img_hash::{Hasher, HasherConfig, ImageHash, image};
-use std::borrow::Cow;
-use std::cell::OnceCell;
-use std::io::Read;
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    cell::OnceCell,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug)]
 struct Screen {
