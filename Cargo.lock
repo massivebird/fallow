@@ -196,6 +196,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 
 [[package]]
+name = "fallow"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "find-subimage",
+ "image",
+ "img_hash",
+]
+
+[[package]]
 name = "find-subimage"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -259,16 +269,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "229d53d58899083193af11e15917b5640cd40b29ff475a1fe4ef725deb02d0f2"
 dependencies = [
  "rayon",
-]
-
-[[package]]
-name = "jump-king"
-version = "0.1.0"
-dependencies = [
- "clap",
- "find-subimage",
- "image",
- "img_hash",
 ]
 
 [[package]]
