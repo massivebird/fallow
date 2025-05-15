@@ -1,6 +1,6 @@
 use clap::{Arg, ValueHint};
 use find_subimage::SubImageFinderState;
-use image::{DynamicImage, ImageBuffer, Rgb, imageops};
+use image::{ImageBuffer, Rgb, imageops};
 use img_hash::{Hasher, HasherConfig, ImageHash, image};
 use std::{
     borrow::Cow,
@@ -79,39 +79,9 @@ fn main() {
 
     let mut finder = SubImageFinderState::new();
 
-    let king_head_img = image::open("/home/penguino/Pictures/jumpking/king_head.png")
-        .unwrap()
-        .into_rgb8();
+    let king_pos = locate_king(&mut finder, &input_img);
 
-    let head_pos = find_patch(
-        &mut finder,
-        &input_img,
-        &king_head_img,
-        PatchType::FlipHorizontally,
-    );
-
-    dbg!(head_pos);
-
-    let king_charge_img = image::open("/home/penguino/Pictures/jumpking/king_charge.png")
-        .unwrap()
-        .into_rgb8();
-
-    let charge_pos = find_patch(&mut finder, &input_img, &king_charge_img, PatchType::NoFlip);
-
-    dbg!(charge_pos);
-
-    let dead_img = image::open("/home/penguino/Pictures/jumpking/king_dead.png")
-        .unwrap()
-        .into_rgb8();
-
-    let dead_pos = find_patch(
-        &mut finder,
-        &input_img,
-        &dead_img,
-        PatchType::FlipHorizontally,
-    );
-
-    dbg!(dead_pos);
+    dbg!(king_pos);
 }
 
 enum PatchType {
@@ -119,6 +89,7 @@ enum PatchType {
     FlipHorizontally,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn find_patch(
     finder: &mut SubImageFinderState,
     src: &ImageBuffer<Rgb<u8>, Vec<u8>>,
@@ -138,7 +109,7 @@ fn find_patch(
         |img| (img.as_raw(), img.width() as usize, img.height() as usize);
 
     let mut locs = finder
-        .find_subimage_positions(to_tuple(&src), to_tuple(&patch), 3)
+        .find_subimage_positions(to_tuple(src), to_tuple(&patch), 3)
         .to_vec();
 
     if matches!(patch_type, PatchType::NoFlip) {
@@ -150,9 +121,49 @@ fn find_patch(
 
     locs.append(
         &mut finder
-            .find_subimage_positions(to_tuple(&src), to_tuple(&patch), 3)
+            .find_subimage_positions(to_tuple(src), to_tuple(&patch), 3)
             .to_vec(),
     );
 
     locs.iter().max_by(|a, b| a.2.total_cmp(&b.2)).copied()
+}
+
+#[allow(clippy::similar_names)]
+fn locate_king(
+    finder: &mut SubImageFinderState,
+    img: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+) -> Option<(usize, usize)> {
+    let king_head_img = image::open("/home/penguino/Pictures/jumpking/king_head.png")
+        .unwrap()
+        .into_rgb8();
+
+    let mut locs = vec![find_patch(
+        finder,
+        img,
+        &king_head_img,
+        PatchType::FlipHorizontally,
+    )];
+
+    let king_charge_img = image::open("/home/penguino/Pictures/jumpking/king_charge.png")
+        .unwrap()
+        .into_rgb8();
+
+    locs.push(find_patch(finder, img, &king_charge_img, PatchType::NoFlip));
+
+    let king_dead_img = image::open("/home/penguino/Pictures/jumpking/king_dead.png")
+        .unwrap()
+        .into_rgb8();
+
+    locs.push(find_patch(
+        finder,
+        img,
+        &king_dead_img,
+        PatchType::FlipHorizontally,
+    ));
+
+    locs.iter()
+        .filter(|o| o.is_some())
+        .max_by(|a, b| a.unwrap().2.total_cmp(&b.unwrap().2))
+        .copied()
+        .map(|o| (o.unwrap().0, o.unwrap().1))
 }
