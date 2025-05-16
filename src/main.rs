@@ -1,13 +1,13 @@
 use clap::{Arg, ValueHint};
 use find_subimage::SubImageFinderState;
-use image::{ImageBuffer, Rgb, imageops::resize};
+use image::{ImageBuffer, Rgb, RgbImage, imageops::resize};
 use img_hash::{FilterType::Nearest, Hasher, HasherConfig, ImageHash, image};
+use std::io::Write;
 use std::{
     fmt::Display,
     path::{Path, PathBuf},
 };
-
-mod video;
+use video_rs::decode::Decoder;
 
 const SCREEN_HEIGHT: u32 = 611;
 
@@ -104,8 +104,6 @@ fn main() {
 
     assert!(input_path.is_file());
 
-    let input_img = video::nth_frame(input_path, 0);
-
     let screens_dir = Path::new("/home/penguino/Pictures/jumpking/screens/");
 
     assert!(screens_dir.is_dir());
@@ -148,38 +146,57 @@ fn main() {
 
     assert!(!screens.is_empty());
 
-    let perp_hash = hasher.hash_image(&input_img);
-
-    let mut best_screen: Option<&Screen> = None;
-    let mut best_dist: Option<u32> = None;
-
-    for screen in &screens {
-        // dbg!(screen.to_string());
-        let dist = perp_hash.dist(&screen.hash);
-        // dbg!(dist);
-
-        if best_dist.is_none_or(|best| best > dist) {
-            best_dist = Some(dist);
-            best_screen = Some(screen);
-        }
-    }
-
-    println!("Area: {}", best_screen.unwrap());
-
     let mut finder = SubImageFinderState::new().with_backend(find_subimage::Backend::Scalar {
-        threshold: 0.5,
+        threshold: 0.2,
         step_x: 1,
         step_y: 1,
     });
 
-    let king_pos = locate_king(&mut finder, &input_img);
+    // Now we do the video stuff.
 
-    dbg!(king_pos);
+    video_rs::init().unwrap();
 
-    println!(
-        "Progress: {:0.02}%",
-        progress(best_screen.unwrap(), king_pos.unwrap())
-    );
+    let mut decoder = Decoder::new(input_path).expect("failed to create decoder");
+
+    let skip_every = 500;
+
+    let mut img_buf = RgbImage::new(956, 720);
+
+    let mut out_buf: Vec<u8> = Vec::new();
+
+    for (frame_idx, frame) in decoder.decode_iter().enumerate() {
+        if !(frame_idx == 0 || frame_idx % skip_every == 0) {
+            continue;
+        }
+
+        if let Ok((_, frame)) = frame {
+            let rgb: ndarray::ArrayView<_, _> = frame.slice(ndarray::s![.., .., ..]);
+
+            // Construct this frame's RGB image.
+            for (row_idx, rgb2) in rgb.slice(ndarray::s![.., .., ..]).outer_iter().enumerate() {
+                for (col_idx, raw_rgb) in rgb2.slice(ndarray::s![.., ..]).outer_iter().enumerate() {
+                    let rgb = Rgb([raw_rgb[0], raw_rgb[1], raw_rgb[2]]);
+
+                    img_buf.put_pixel(col_idx as u32, row_idx as u32, rgb);
+                }
+            }
+
+            let Some(screen) = locate_screen(&screens, &img_buf, &hasher) else {
+                continue;
+            };
+
+            let Some(king_pos) = locate_king(&mut finder, &img_buf) else {
+                continue;
+            };
+
+            // writeln!(&mut out_buf, "{frame_idx},{}", progress(screen, king_pos));
+            println!("{frame_idx},{}", progress(screen, king_pos));
+        } else {
+            break;
+        }
+    }
+
+    println!("{out_buf:?}");
 }
 
 fn progress(screen: &Screen, king_pos: (usize, usize)) -> f32 {
@@ -219,6 +236,30 @@ fn find_patch(
     );
 
     locs.iter().min_by(|a, b| a.2.total_cmp(&b.2)).copied()
+}
+
+fn locate_screen<'a>(
+    screens: &'a [Screen],
+    img: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+    hasher: &Hasher,
+) -> Option<&'a Screen> {
+    let img_hash = hasher.hash_image(img);
+
+    let mut best_screen: Option<&Screen> = None;
+    let mut best_dist: Option<u32> = None;
+
+    for screen in screens {
+        // dbg!(screen.to_string());
+        let dist = img_hash.dist(&screen.hash);
+        // dbg!(dist);
+
+        if best_dist.is_none_or(|best| best > dist) {
+            best_dist = Some(dist);
+            best_screen = Some(screen);
+        }
+    }
+
+    best_screen
 }
 
 #[allow(clippy::similar_names)]
