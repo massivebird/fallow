@@ -7,6 +7,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+mod video;
+
 const SCREEN_HEIGHT: u32 = 611;
 
 #[derive(Debug)]
@@ -92,19 +94,17 @@ impl Area {
 fn main() {
     let matches = clap::command!()
         .arg(
-            Arg::new("img")
+            Arg::new("video")
                 .value_hint(ValueHint::FilePath)
                 .required(true),
         )
         .get_matches();
 
-    let input_path = Path::new(matches.get_one::<String>("img").unwrap());
+    let input_path = Path::new(matches.get_one::<String>("video").unwrap());
 
     assert!(input_path.is_file());
 
-    let input_img = image::open(input_path)
-        .expect("Could not find test-image")
-        .into_rgb8();
+    let input_img = video::nth_frame(input_path, 0);
 
     let screens_dir = Path::new("/home/penguino/Pictures/jumpking/screens/");
 
@@ -123,20 +123,17 @@ fn main() {
     let mut screens = vec![];
 
     macro_rules! add_screens {
-        ($vec: expr, $area: expr, $prefix: expr) => {
-            #[allow(unused_assignments)]
-            {
-                let mut counter = 1;
+        ($vec: expr, $area: expr, $prefix: expr) => {{
+            let mut counter = 1;
 
-                while let Some(path) = screen_paths
-                    .iter()
-                    .find(|p| p.ends_with(format!("{}{counter}.png", $prefix)))
-                {
-                    $vec.push(Screen::new(path, $area(counter), &hasher));
-                    counter += 1;
-                }
+            while let Some(path) = screen_paths
+                .iter()
+                .find(|p| p.ends_with(format!("{}{counter}.png", $prefix)))
+            {
+                $vec.push(Screen::new(path, $area(counter), &hasher));
+                counter += 1;
             }
-        };
+        }};
     }
 
     add_screens!(&mut screens, Area::Tower, "tower");
