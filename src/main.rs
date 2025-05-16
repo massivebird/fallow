@@ -176,12 +176,15 @@ fn main() {
 
     dbg!(king_pos);
 
-    let height = best_screen.unwrap().area.height_offset() + king_pos.unwrap().1 as u32;
-
     println!(
         "Progress: {:0.02}%",
-        (height as f32) * 100.0 / ((SCREEN_HEIGHT * 45) as f32)
+        progress(best_screen.unwrap(), king_pos.unwrap())
     );
+}
+
+fn progress(screen: &Screen, king_pos: (usize, usize)) -> f32 {
+    let height = screen.area.height_offset() + king_pos.1 as u32;
+    (height as f32) * 100.0 / ((SCREEN_HEIGHT * 45) as f32)
 }
 
 enum PatchType {
