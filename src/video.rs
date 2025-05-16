@@ -1,4 +1,4 @@
-use crate::{Screen, SCREEN_HEIGHT};
+use crate::{SCREEN_HEIGHT, Screen};
 use find_subimage::SubImageFinderState;
 use image::{ImageBuffer, Rgb, RgbImage, imageops::resize};
 use img_hash::Hasher;
@@ -9,11 +9,7 @@ enum PatchType {
     FlipHorizontally,
 }
 
-pub fn analyze(
-    video_src: &std::path::Path,
-    screens: &[Screen],
-    hasher: &Hasher,
-) {
+pub fn analyze(video_src: &std::path::Path, screens: &[Screen], hasher: &Hasher) {
     video_rs::init().unwrap();
 
     let mut finder = SubImageFinderState::new().with_backend(find_subimage::Backend::Scalar {
@@ -33,31 +29,32 @@ pub fn analyze(
             continue;
         }
 
-        if let Ok((_, frame)) = frame {
-            let rgb: ndarray::ArrayView<_, _> = frame.slice(ndarray::s![.., .., ..]);
-
-            // Construct this frame's RGB image.
-            for (row_idx, rgb2) in rgb.slice(ndarray::s![.., .., ..]).outer_iter().enumerate() {
-                for (col_idx, raw_rgb) in rgb2.slice(ndarray::s![.., ..]).outer_iter().enumerate() {
-                    let rgb = Rgb([raw_rgb[0], raw_rgb[1], raw_rgb[2]]);
-
-                    img_buf.put_pixel(col_idx as u32, row_idx as u32, rgb);
-                }
-            }
-
-            let Some(screen) = locate_screen(screens, &img_buf, hasher) else {
-                continue;
-            };
-
-            let Some(king_pos) = locate_king(&mut finder, &img_buf) else {
-                continue;
-            };
-
-            // writeln!(&mut out_buf, "{frame_idx},{}", progress(screen, king_pos));
-            println!("{frame_idx},{}", progress(screen, king_pos));
-        } else {
+        let Ok((_, frame)) = frame else {
+            println!("Failed to load frame {frame_idx}.");
             break;
+        };
+
+        let rgb: ndarray::ArrayView<_, _> = frame.slice(ndarray::s![.., .., ..]);
+
+        // Construct this frame's RGB image.
+        for (row_idx, rgb2) in rgb.slice(ndarray::s![.., .., ..]).outer_iter().enumerate() {
+            for (col_idx, raw_rgb) in rgb2.slice(ndarray::s![.., ..]).outer_iter().enumerate() {
+                let rgb = Rgb([raw_rgb[0], raw_rgb[1], raw_rgb[2]]);
+
+                img_buf.put_pixel(col_idx as u32, row_idx as u32, rgb);
+            }
         }
+
+        let Some(screen) = locate_screen(screens, &img_buf, hasher) else {
+            continue;
+        };
+
+        let Some(king_pos) = locate_king(&mut finder, &img_buf) else {
+            continue;
+        };
+
+        // writeln!(&mut out_buf, "{frame_idx},{}", progress(screen, king_pos));
+        println!("{frame_idx},{}", progress(screen, king_pos));
     }
 }
 
